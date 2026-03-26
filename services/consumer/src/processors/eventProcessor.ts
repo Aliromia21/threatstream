@@ -20,8 +20,10 @@ export async function processEvent(event: KafkaEvent): Promise<void> {
   await insertRawEvent(event);
   await updateDailyStats(event);
   await updateAttackSource(event);
-}
 
+  // Notify Stats API via PostgreSQL LISTEN/NOTIFY
+  await pool.query("SELECT pg_notify('new_event', $1)", [event.type]);
+}
 
 // 1. Raw Event Storage
 

@@ -14,5 +14,8 @@
     "dev:dashboard": "cd services/dashboard && npm run dev"
   },
   "author": "Ali Romia",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "ws": "^8.20.0"
+  }
 }

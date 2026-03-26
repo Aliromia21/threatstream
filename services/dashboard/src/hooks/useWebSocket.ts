@@ -16,7 +16,7 @@ export function useWebSocket(): UseWebSocketReturn {
   const reconnectTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const connect = useCallback(() => {
-    // Don't create multiple connections
+    // no multiple connections
     if (wsRef.current?.readyState === WebSocket.OPEN) return;
 
     const ws = new WebSocket(WS_URL);

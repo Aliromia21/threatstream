@@ -1,6 +1,5 @@
-# Docker Compose
-
 services:
+  # ---- Infrastructure ----
   zookeeper:
     image: confluentinc/cp-zookeeper:7.5.0
     container_name: ts-zookeeper
@@ -16,7 +15,6 @@ services:
       retries: 5
     networks:
       - threatstream
-
 
   kafka:
     image: confluentinc/cp-kafka:7.5.0
@@ -60,6 +58,99 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - threatstream
+
+  # ---- Application Services ----
+  event-api:
+    build: ./services/event-api
+    container_name: ts-event-api
+    depends_on:
+      kafka:
+        condition: service_healthy
+    ports:
+      - "3001:3001"
+    environment:
+      PORT: 3001
+      KAFKA_BROKERS: kafka:9092
+      KAFKA_CLIENT_ID: event-api
+      NODE_ENV: production
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3001/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    networks:
+      - threatstream
+
+  consumer:
+    build: ./services/consumer
+    container_name: ts-consumer
+    depends_on:
+      kafka:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    environment:
+      KAFKA_BROKERS: kafka:9092
+      KAFKA_GROUP_ID: threatstream-consumer
+      KAFKA_CLIENT_ID: consumer
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: threatstream
+      DB_USER: threatstream
+      DB_PASSWORD: threatstream_dev
+      NODE_ENV: production
+    networks:
+      - threatstream
+
+  stats-api:
+    build: ./services/stats-api
+    container_name: ts-stats-api
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "3003:3003"
+    environment:
+      PORT: 3003
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: threatstream
+      DB_USER: threatstream
+      DB_PASSWORD: threatstream_dev
+      NODE_ENV: production
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3003/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    networks:
+      - threatstream
+
+  simulator:
+    build: ./services/simulator
+    container_name: ts-simulator
+    depends_on:
+      event-api:
+        condition: service_healthy
+    environment:
+      EVENT_API_URL: http://event-api:3001
+      EVENTS_PER_SECOND: 5
+      SIMULATOR_MODE: mixed
+    networks:
+      - threatstream
+    profiles:
+      - demo
+
+  dashboard:
+    build: ./services/dashboard
+    container_name: ts-dashboard
+    depends_on:
+      stats-api:
+        condition: service_healthy
+    ports:
+      - "8080:80"
     networks:
       - threatstream
 

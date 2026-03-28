@@ -1,18 +1,18 @@
 import { config } from './config';
 import { connectDatabase } from './database';
 import { startConsumer, stopConsumer } from './kafka/consumer';
+import { startCleanupTimer } from './processors/threatDetector';
 
 async function start(): Promise<void> {
-  // Connecting to PostgreSQL
   await connectDatabase();
-
-  // Consuming from Kafka
   await startConsumer();
 
+  startCleanupTimer();
+
   console.log('[consumer] Service running — waiting for events');
+  console.log('[consumer] Threat detection: brute force (10 failures/2min), port scan (8 ports/1min)');
 }
 
-// Graceful shutdown
 process.on('SIGTERM', async () => {
   console.log('[consumer] SIGTERM received — shutting down');
   await stopConsumer();

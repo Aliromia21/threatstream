@@ -1,8 +1,5 @@
 import { pool } from '../database';
-
-// Event Processor — Dual Write
-
-
+import { detectThreats } from './threatDetector';
 
 interface KafkaEvent {
   id: string;
@@ -21,11 +18,12 @@ export async function processEvent(event: KafkaEvent): Promise<void> {
   await updateDailyStats(event);
   await updateAttackSource(event);
 
+  // Threat detection — check for attack patterns
+  await detectThreats(event);
+
   // Notify Stats API via PostgreSQL LISTEN/NOTIFY
   await pool.query("SELECT pg_notify('new_event', $1)", [event.type]);
 }
-
-// 1. Raw Event Storage
 
 async function insertRawEvent(event: KafkaEvent): Promise<void> {
   const query = `
@@ -45,12 +43,8 @@ async function insertRawEvent(event: KafkaEvent): Promise<void> {
   ]);
 }
 
-
-// 2. Daily Stats Aggregation
-
-
 async function updateDailyStats(event: KafkaEvent): Promise<void> {
-  const date = event.timestamp.split('T')[0]; 
+  const date = event.timestamp.split('T')[0];
 
   const columnMap: Record<string, string> = {
     auth_failure: 'auth_failures',
@@ -75,9 +69,6 @@ async function updateDailyStats(event: KafkaEvent): Promise<void> {
 
   await pool.query(query, [date]);
 }
-
-
-// 3. Attack Source Tracking
 
 async function updateAttackSource(event: KafkaEvent): Promise<void> {
   const date = event.timestamp.split('T')[0];

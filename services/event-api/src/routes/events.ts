@@ -1,5 +1,5 @@
 import { Router, Request, Response, NextFunction } from 'express';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'node:crypto';
 import { validateEvent } from '../validators/eventValidator';
 import { AppError } from '../middleware/errorHandler';
 import { sendEvent, getTopicForEvent } from '../kafka';
@@ -20,7 +20,7 @@ router.post('/events', async (req: Request, res: Response, next: NextFunction) =
 
     // Step 2: Enrich
     const enrichedEvent = {
-      id: uuidv4(),
+      id: randomUUID(),
       type: req.body.type,
       sourceIp: req.body.sourceIp,
       targetEndpoint: req.body.targetEndpoint || '/unknown',

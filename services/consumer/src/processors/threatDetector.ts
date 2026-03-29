@@ -181,3 +181,11 @@ export function getDetectorStats(): { trackedIps: number; alerts: number } {
     alerts: alertedBruteForce.size + alertedPortScan.size,
   };
 }
+
+// Reset all state (for testing only)
+export function resetDetectorState(): void {
+  authFailureWindows.clear();
+  portScanWindows.clear();
+  alertedBruteForce.clear();
+  alertedPortScan.clear();
+}

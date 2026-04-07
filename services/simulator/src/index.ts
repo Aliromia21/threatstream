@@ -14,7 +14,11 @@ let errors = 0;
 
 async function sendEvent(event: object): Promise<void> {
   try {
-    await axios.post(`${config.eventApiUrl}/events`, event);
+    await axios.post(`${config.eventApiUrl}/events`, event, {
+      headers: {
+        'X-API-Key': process.env.API_KEY || 'simulator-key',
+      },
+    });
     eventsSent++;
   } catch (error) {
     errors++;

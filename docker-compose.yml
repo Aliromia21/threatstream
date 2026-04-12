@@ -1,5 +1,4 @@
 services:
-  # ---- Infrastructure ----
   zookeeper:
     image: confluentinc/cp-zookeeper:7.5.0
     container_name: ts-zookeeper
@@ -61,7 +60,6 @@ services:
     networks:
       - threatstream
 
-  # ---- Application Services ----
   event-api:
     build: ./services/event-api
     container_name: ts-event-api
@@ -76,6 +74,13 @@ services:
       KAFKA_CLIENT_ID: event-api
       NODE_ENV: production
       API_KEYS: dev-key-001,dev-key-002,simulator-key
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3001/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    networks:
+      - threatstream
 
   consumer:
     build: ./services/consumer
@@ -133,6 +138,10 @@ services:
       EVENTS_PER_SECOND: 5
       SIMULATOR_MODE: mixed
       API_KEY: simulator-key
+    networks:
+      - threatstream
+    profiles:
+      - demo
 
   dashboard:
     build: ./services/dashboard

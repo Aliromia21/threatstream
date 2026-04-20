@@ -1,9 +1,6 @@
 import { Kafka, Consumer, EachMessagePayload } from 'kafkajs';
 import { config } from '../config';
-import { processEvent } from '../processors/eventProcessor';
-
-// Kafka Consumer
-
+import { addToBuffer } from '../processors/batchProcessor';
 
 const kafka = new Kafka({
   clientId: config.kafkaClientId,
@@ -19,7 +16,6 @@ const consumer: Consumer = kafka.consumer({
 });
 
 const TOPICS = ['auth-events', 'network-events', 'threat-alerts'];
-
 let messagesProcessed = 0;
 
 export async function startConsumer(): Promise<void> {
@@ -35,14 +31,11 @@ export async function startConsumer(): Promise<void> {
     eachMessage: async ({ topic, partition, message }: EachMessagePayload) => {
       try {
         if (!message.value) return;
-
         const event = JSON.parse(message.value.toString());
-
-        await processEvent(event);
-
+        await addToBuffer(event);
         messagesProcessed++;
-
-        if (messagesProcessed % 50 === 0) {
+        
+        if (messagesProcessed % 100 === 0) {
           console.log(`[consumer] Processed ${messagesProcessed} events`);
         }
       } catch (error) {

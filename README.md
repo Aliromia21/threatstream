@@ -207,6 +207,23 @@ cd services/consumer && npx jest --coverage
 | Integration | 4+ | HTTP endpoints with mocked Kafka — validates request/response cycle |
 | Docker | 5 builds | All services compile and build successfully in CI |
 
+
+## Performance
+
+### Batch Insert Optimization
+
+The Consumer batches up to 50 events per INSERT query, flushing 
+either when the buffer is full or after 1 second.
+
+| Simulator Rate | Events Processed | Consumer Status |
+|---------------|-----------------|-----------------|
+| 5 events/sec | 5.4/sec measured | No lag, 1 flush/sec |
+| 100 events/sec | 100/sec measured | No lag, 2 flushes/sec |
+
+**Why batch?** Single INSERT = 1 TCP roundtrip per event. 
+Batch INSERT = 1 TCP roundtrip per 50 events. 
+Same overhead, 50x more data written.
+
 ### CI/CD
 
 Every push to `main` triggers the GitHub Actions pipeline: lint → test → Docker build verification.

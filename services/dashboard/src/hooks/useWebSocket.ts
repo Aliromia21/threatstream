@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { WsStatsUpdate } from '../types';
 
-const WS_URL = 'ws://localhost:3003';
+const WS_URL = 'ws://98.93.154.29:3003';
 const RECONNECT_DELAY = 3000;
 
 interface UseWebSocketReturn {
